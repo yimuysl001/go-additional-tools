@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/gogf/gf/v2/os/gcfg"
+	"go-additional-tools/econf/appllo_cfg"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 
-	"github.com/gogf/gf/v2/container/gvar"
 	"github.com/gogf/gf/v2/encoding/gjson"
-	"github.com/gogf/gf/v2/errors/gerror"
+
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/os/gfile"
@@ -35,18 +36,18 @@ var (
 
 // AdapterContent 配置适配器内容结构
 type AdapterContent struct {
-	jsonVar *gvar.Var // 解析后的JSON对象，类型: *gjson.Json
+	jsonVar *gjson.Json // 解析后的JSON对象，类型: *gjson.Json
 }
 
 // SetContent 设置配置内容
-func (a *AdapterContent) SetContent(content string) error {
-	j, err := gjson.LoadContent([]byte(content), true)
-	if err != nil {
-		return gerror.Wrap(err, "加载配置内容失败")
-	}
-	a.jsonVar.Set(j)
-	return nil
-}
+//func (a *AdapterContent) SetContent(content string) error {
+//	j, err := gjson.LoadContent([]byte(content), true)
+//	if err != nil {
+//		return gerror.Wrap(err, "加载配置内容失败")
+//	}
+//	a.jsonVar = j
+//	return nil
+//}
 
 // Available 检查适配器是否可用
 func (a *AdapterContent) Available(ctx context.Context, resource ...string) bool {
@@ -58,7 +59,7 @@ func (a *AdapterContent) Get(ctx context.Context, pattern string) (interface{}, 
 	if a.jsonVar.IsNil() {
 		return nil, nil
 	}
-	return a.jsonVar.Val().(*gjson.Json).Get(pattern).Val(), nil
+	return a.jsonVar.Get(pattern).Val(), nil
 }
 
 // Data 获取所有配置数据
@@ -66,7 +67,7 @@ func (a *AdapterContent) Data(ctx context.Context) (map[string]interface{}, erro
 	if a.jsonVar.IsNil() {
 		return nil, nil
 	}
-	return a.jsonVar.Val().(*gjson.Json).Var().Map(), nil
+	return a.jsonVar.Map(), nil
 }
 
 // configFileFinder 配置文件查找器
@@ -233,7 +234,7 @@ func NewAdapterFile(filename string) map[string]any {
 }
 
 // NewAdapter 创建内容适配器
-func NewAdapter(filenames ...string) *AdapterContent {
+func NewAdapter(filenames ...string) gcfg.Adapter {
 	ctx := gctx.GetInitCtx()
 	finder := newConfigFileFinder()
 
@@ -277,12 +278,45 @@ func NewAdapter(filenames ...string) *AdapterContent {
 	// 处理配置文件引用（避免循环引用）
 	processConfigReferences(configMap, finder, loadedFiles)
 
+	if a := apolloAdapter(configMap); a != nil {
+		return a
+	}
+
 	// 创建适配器实例
 	adapter := &AdapterContent{
-		jsonVar: gvar.New(gjson.New(configMap), true),
+		jsonVar: gjson.New(configMap, true),
 	}
 
 	return adapter
+}
+
+func apolloAdapter(configMap map[string]any) gcfg.Adapter {
+	j := gjson.New(configMap)
+
+	json := j.GetJson("apollo")
+
+	if json == nil || json.IsNil() {
+		return nil
+	}
+
+	var appl = appllo_cfg.Config{}
+	err := json.Scan(&appl)
+	if err != nil {
+		g.Log().Error(gctx.GetInitCtx(), "加载配置文件失败:", err)
+		return nil
+	}
+	if appl.AppID == "" || appl.IP == "" || appl.Cluster == "" {
+		return nil
+	}
+
+	adapter, err := appllo_cfg.New(gctx.New(), appl, j)
+	if err != nil {
+		g.Log().Error(gctx.GetInitCtx(), "加载配置文件失败:", err)
+		return nil
+	}
+
+	return adapter
+
 }
 
 // loadAndMergeConfig 加载并合并配置文件
