@@ -1,8 +1,10 @@
 package egoja
 
 import (
+	"context"
 	"fmt"
 	"github.com/gogf/gf/v2/os/gctx"
+	"go-additional-tools/egoja/pkgs"
 	"go-additional-tools/egoja/require"
 	"sync"
 	"testing"
@@ -87,4 +89,53 @@ return index+1
 		}()
 	}
 	wg.Wait()
+}
+
+func TestGoScript(t *testing.T) {
+	pkgs.GoEnv()
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			id, err := ExecScriptById(gctx.New(), "testgo", `
+import * as strings from 'strings'
+var sb1 = strings.Builder
+var sb2 = strings.Builder
+sb1.WriteString("123==>")
+sb1.WriteString(index+'')
+sb2.WriteString("=================\n")
+sb2.WriteString(sb1.String())
+return sb2.String()
+`, map[string]any{"index": i})
+			fmt.Println("结果：", id, err)
+		}()
+	}
+	wg.Wait()
+}
+
+func BenchmarkVariableP(b *testing.B) {
+	require.RegisterCommonParameter("targs", func(b string, args ...any) {
+		fmt.Println(b)
+		fmt.Println(args...)
+	})
+
+	var wg sync.WaitGroup
+	for i := 0; i < b.N; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, err := ExecScriptById(context.TODO(), "AAA", `var aaa= ["a","b","ccc",ddd]
+targs("a",  ...aaa)
+`, map[string]any{
+				"ddd": "123546",
+			})
+			fmt.Println(err)
+		}()
+
+	}
+	wg.Wait()
+
 }

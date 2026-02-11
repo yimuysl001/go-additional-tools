@@ -16,12 +16,13 @@ var (
 func Require(name string) any {
 	name = strings.ToLower(strings.TrimSpace(name))
 
-	if !strings.HasSuffix(name, ".js") {
+	if !strings.HasSuffix(name, ".js") { // todo 先从缓存中获取 如果没有去找脚本
 		cache, b := pkgs.GetCache(name)
 		if b {
 			return cache
 		}
-		panic("require: " + name + " is not a valid module name")
+		//panic("require: " + name + " is not a valid module name")
+		name = name + ".js"
 	}
 
 	//value, ok := cacheProgram.Load(name)
