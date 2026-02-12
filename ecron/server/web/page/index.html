@@ -393,9 +393,9 @@
             <i class="fas fa-clock" style="color: #2563eb;"></i>
             定时任务配置中心
         </h1>
-        <button class="btn btn-primary" id="addTaskBtn">
-            <i class="fas fa-plus-circle"></i> 新建任务
-        </button>
+<!--        <button class="btn btn-primary" id="addTaskBtn">-->
+<!--            <i class="fas fa-plus-circle"></i> 新建任务-->
+<!--        </button>-->
     </div>
 
     <!-- 过滤搜索区域（预留后端对接） -->
@@ -587,6 +587,8 @@
             { id: "task-005", funcName: "HealthCheck", description: "节点健康检查", cronExpr: "*/30 * * * * ?", subject: "nats.health.check", params: "{\"timeout\":5}", timeout: "10s", checkLock: false, lastRun: "2025-04-16 14:23:00", lastEnd: "2025-04-16 14:23:05", status: 1, runStatus: 4, errorCode: 1, msg: "连接超时", projName: "监控系统", reTry: 3, reCount: 3, chainId: "chain_555_error" },
         ];
 
+
+
         // ---------- 全局变量 ----------
         const taskTableBody = document.getElementById('taskTableBody');
         const modal = document.getElementById('taskModal');
@@ -614,9 +616,34 @@
             }, 2800);
         }
 
+        async function getTasks(){
+            mockTasks=[]
+            const response = await fetch("/api/v1/cron/list", {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                showToast(`HTTP错误: ${response.status}`, 'error');
+                return
+            }
+            const result = await response.json();
+            if (result.code !== 200) {
+                showToast(result.msg || '获取数据失败', 'error');
+                return
+            }
+            mockTasks= result.data||[]
+        }
+
+
         // 渲染表格 (支持过滤)
-        function renderTasks() {
+       async function renderTasks() {
+            await getTasks()
             // 获取过滤条件
+
             const keyword = searchKeyword.value.toLowerCase().trim();
             const projNameFilter = filterProjName.value.toLowerCase().trim();
             const statusFilter = filterStatus.value; // 字符串 '1' '2' ''
@@ -647,7 +674,7 @@
             document.getElementById('taskCount').innerText = filtered.length;
 
             if (filtered.length === 0) {
-                taskTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px;"><i class="fas fa-inbox" style="color:#b9c8da; font-size:24px;"></i> <p style="color:#6f8fbc;">暂无匹配的任务，请修改条件或新增</p></td></tr>`;
+                taskTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px;"><i class="fas fa-inbox" style="color:#b9c8da; font-size:24px;"></i> <p style="color:#6f8fbc;">暂无匹配的任务</p></td></tr>`;
                 return;
             }
 
@@ -739,7 +766,7 @@
                 showToast('任务不存在', 'error');
                 return;
             }
-            modalTitle.innerHTML = '<i class="fas fa-edit"></i> 编辑任务';
+            modalTitle.innerHTML = '<i class="fas fa-edit"></i> 查看任务';
             document.getElementById('taskId').value = task.id || '';
             document.getElementById('funcName').value = task.funcName || '';
             document.getElementById('description').value = task.description || '';
@@ -768,88 +795,109 @@
 
         // ---------- 保存任务（新增/更新）对接后端预留 ----------
         function saveTask() {
-            // 收集表单数据 —— 完全匹配字段
-            const id = document.getElementById('taskId').value;
-            const funcName = document.getElementById('funcName').value.trim();
-            const description = document.getElementById('description').value.trim();
-            const cronExpr = document.getElementById('cronExpr').value.trim();
-            const subject = document.getElementById('subject').value.trim();
-            const params = document.getElementById('params').value.trim();
-            const timeout = document.getElementById('timeout').value.trim();
-            const checkLock = document.getElementById('checkLock').checked;
-            const projName = document.getElementById('projName').value.trim();
-            const reTry = parseInt(document.getElementById('reTry').value, 10) || 0;
-            const reCount = parseInt(document.getElementById('reCount').value, 10) || 0;
-            const chainId = document.getElementById('chainId').value.trim();
-            const status = parseInt(document.getElementById('status').value, 10);
-            const runStatus = parseInt(document.getElementById('runStatus').value, 10);
-            const errorCode = parseInt(document.getElementById('errorCode').value, 10) || 0;
-            const msg = document.getElementById('msg').value.trim();
-            const lastRun = document.getElementById('lastRun').value.trim();  // 只读，但保留
-            const lastEnd = document.getElementById('lastEnd').value.trim();
+            showToast('请通过接口进行处理，页面不支持修改', 'error');
 
-            if (!funcName || !cronExpr) {
-                showToast('执行函数名和Cron表达式为必填项', 'error');
-                return;
-            }
-
-            // 构造任务对象
-            const newTask = {
-                id: id || 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                funcName,
-                description,
-                cronExpr,
-                subject,
-                params,
-                timeout,
-                checkLock,
-                projName,
-                reTry,
-                reCount,
-                chainId,
-                status,
-                runStatus,
-                errorCode,
-                msg,
-                lastRun,
-                lastEnd,
-            };
-
-            // 模拟接口：如果是编辑（id存在且在mockTasks中）
-            if (id) {
-                const index = mockTasks.findIndex(t => t.id === id);
-                if (index !== -1) {
-                    // 保留原有ID，更新所有字段
-                    newTask.id = id;
-                    mockTasks[index] = newTask;
-                    showToast('任务更新成功 (后端PUT接口预留)', 'success');
-                } else {
-                    showToast('编辑失败，任务不存在', 'error');
-                    closeModal();
-                    return;
-                }
-            } else {
-                // 新增
-                mockTasks.push(newTask);
-                showToast('任务新增成功 (后端POST接口预留)', 'success');
-            }
-
-            closeModal();
-            renderTasks(); // 刷新表格
+            // // 收集表单数据 —— 完全匹配字段
+            // const id = document.getElementById('taskId').value;
+            // const funcName = document.getElementById('funcName').value.trim();
+            // const description = document.getElementById('description').value.trim();
+            // const cronExpr = document.getElementById('cronExpr').value.trim();
+            // const subject = document.getElementById('subject').value.trim();
+            // const params = document.getElementById('params').value.trim();
+            // const timeout = document.getElementById('timeout').value.trim();
+            // const checkLock = document.getElementById('checkLock').checked;
+            // const projName = document.getElementById('projName').value.trim();
+            // const reTry = parseInt(document.getElementById('reTry').value, 10) || 0;
+            // const reCount = parseInt(document.getElementById('reCount').value, 10) || 0;
+            // const chainId = document.getElementById('chainId').value.trim();
+            // const status = parseInt(document.getElementById('status').value, 10);
+            // const runStatus = parseInt(document.getElementById('runStatus').value, 10);
+            // const errorCode = parseInt(document.getElementById('errorCode').value, 10) || 0;
+            // const msg = document.getElementById('msg').value.trim();
+            // const lastRun = document.getElementById('lastRun').value.trim();  // 只读，但保留
+            // const lastEnd = document.getElementById('lastEnd').value.trim();
+            //
+            // if (!funcName || !cronExpr) {
+            //     showToast('执行函数名和Cron表达式为必填项', 'error');
+            //     return;
+            // }
+            //
+            // // 构造任务对象
+            // const newTask = {
+            //     id: id || 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+            //     funcName,
+            //     description,
+            //     cronExpr,
+            //     subject,
+            //     params,
+            //     timeout,
+            //     checkLock,
+            //     projName,
+            //     reTry,
+            //     reCount,
+            //     chainId,
+            //     status,
+            //     runStatus,
+            //     errorCode,
+            //     msg,
+            //     lastRun,
+            //     lastEnd,
+            // };
+            //
+            // // 模拟接口：如果是编辑（id存在且在mockTasks中）
+            // if (id) {
+            //     const index = mockTasks.findIndex(t => t.id === id);
+            //     if (index !== -1) {
+            //         // 保留原有ID，更新所有字段
+            //         newTask.id = id;
+            //         mockTasks[index] = newTask;
+            //         showToast('任务更新成功 (后端PUT接口预留)', 'success');
+            //     } else {
+            //         showToast('编辑失败，任务不存在', 'error');
+            //         closeModal();
+            //         return;
+            //     }
+            // } else {
+            //     // 新增
+            //     mockTasks.push(newTask);
+            //     showToast('任务新增成功 (后端POST接口预留)', 'success');
+            // }
+            //
+            // closeModal();
+            // renderTasks(); // 刷新表格
         }
 
         // ---------- 删除任务（对接预留）----------
-        function deleteTaskById(id) {
+       async function deleteTaskById(id) {
             if (!id) return;
             if (confirm('确定删除该定时任务吗？此操作不可撤销。')) {
-                const index = mockTasks.findIndex(t => t.id === id);
-                if (index !== -1) {
-                    mockTasks.splice(index, 1);
-                    showToast(`任务[${id}]已删除 (后端DELETE接口预留)`, 'success');
-                    renderTasks();
-                } else {
-                    showToast('任务不存在', 'error');
+
+                const response = await fetch("/api/v1/cron/delete?id="+id, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    showToast(`HTTP错误: ${response.status}`, 'error');
+                    return
                 }
+                const result = await response.json();
+                if (result.code !== 200) {
+                    showToast(result.msg || '获取数据失败', 'error');
+                    return
+                }
+                await renderTasks();
+                // const index = mockTasks.findIndex(t => t.id === id);
+                // if (index !== -1) {
+                //     mockTasks.splice(index, 1);
+                //     showToast(`任务[${id}]已删除 (后端DELETE接口预留)`, 'success');
+                //     renderTasks();
+                // } else {
+                //     showToast('任务不存在', 'error');
+                // }
             }
         }
 
@@ -890,7 +938,7 @@
         bindEvents();
 
         // 暴露部分全局变量方便模拟对接调试 (可移除)
-        window.__mockTasks = mockTasks;  // 方便控制台查看
+        //window.__mockTasks = mockTasks;  // 方便控制台查看
     })();
 </script>
 <!-- 说明：所有字段都已呈现在表单/表格中，后端对接请根据前端请求方式实现API -->
