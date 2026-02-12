@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定时任务 · 增删改查管理</title>
+    <!-- Font Awesome 5 图标库，清爽 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- 简单、干净的内嵌样式，类似卡片设计，适配后台管理 -->
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7fc;
+            color: #1e293b;
+            padding: 24px;
+            line-height: 1.5;
+        }
+
+        .task-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* 头部标题与操作区 */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .page-header h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #0f3b5e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            border: 1px solid #2563eb;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-outline {
+            background-color: white;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+        }
+        .btn-outline:hover {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 5px 12px;
+            font-size: 13px;
+        }
+
+        /* 搜索/过滤栏 */
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+            background: white;
+            padding: 20px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            margin-bottom: 28px;
+            border: 1px solid #e9eef3;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+            flex: 1 0 180px;
+        }
+
+        .filter-item label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #5e6f8d;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .filter-item input, .filter-item select {
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #fbfdff;
+            font-size: 14px;
+            transition: 0.15s;
+        }
+
+        .filter-item input:focus, .filter-item select:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        /* 任务表格卡片 */
+        .table-card {
+            background: white;
+            border-radius: 24px;
+            padding: 4px 0;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+            border: 1px solid #edf2f7;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 1400px;
+        }
+
+        th {
+            text-align: left;
+            padding: 18px 16px;
+            background-color: #f9fbfe;
+            color: #38506b;
+            font-weight: 600;
+            border-bottom: 1px solid #e2ebf3;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f5fa;
+            vertical-align: middle;
+            color: #1e2f44;
+            white-space: nowrap;
+        }
+
+        tr:hover td {
+            background-color: #fafcff;
+        }
+
+        /* 状态标签 */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            background-color: #e2e8f0;
+            color: #334155;
+        }
+
+        .badge-active {
+            background-color: #dff0e6;
+            color: #0b6b4a;
+        }
+        .badge-inactive {
+            background-color: #fee9e7;
+            color: #a12b2b;
+        }
+        .badge-running {
+            background-color: #e3efff;
+            color: #1e4fd9;
+        }
+        .badge-normal {
+            background-color: #e6f7e6;
+            color: #1f7b4d;
+        }
+        .badge-error {
+            background-color: #ffe6e5;
+            color: #b33636;
+        }
+
+        /* 操作按钮组 */
+        .action-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #5e7192;
+            font-size: 15px;
+            padding: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .action-btn:hover {
+            background-color: #f1f7fd;
+            color: #2563eb;
+        }
+
+        .action-btn.delete:hover {
+            color: #dc2626;
+        }
+
+        /* 模态框 (新增/编辑) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.3);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            width: 700px;
+            max-width: 96%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+            animation: modalFade 0.2s;
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #0b2a44;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #8898aa;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px 24px;
+        }
+
+        .form-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-item.full-width {
+            grid-column: span 2;
+        }
+
+        .form-item label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #455d7a;
+        }
+
+        .form-item input, .form-item select, .form-item textarea {
+            padding: 12px 14px;
+            border: 1px solid #dde5ed;
+            border-radius: 14px;
+            font-size: 14px;
+            background: #ffffff;
+            transition: 0.15s;
+        }
+
+        .form-item textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .form-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 6px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-direction: row !important;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        /* 提示消息 */
+        .toast-message {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 14px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast-message.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success { background-color: #0f6e4a; }
+        .toast-error { background-color: #b43434; }
+    </style>
+</head>
+<body>
+<div class="task-container">
+    <!-- 页眉：标题 + 新增按钮 -->
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-clock" style="color: #2563eb;"></i>
+            定时任务配置中心
+        </h1>
+        <button class="btn btn-primary" id="addTaskBtn">
+            <i class="fas fa-plus-circle"></i> 新建任务
+        </button>
+    </div>
+
+    <!-- 过滤搜索区域（预留后端对接） -->
+    <div class="filter-bar">
+        <div class="filter-item">
+            <label><i class="fas fa-tag"></i> 任务描述/名称</label>
+            <input type="text" id="searchKeyword" placeholder="请输入关键字" autocomplete="off">
+        </div>
+        <div class="filter-item">
+            <label><i class="fas fa-project-diagram"></i> 工程名称</label>
+            <input type="text" id="filterProjName" placeholder="proj_name">
+        </div>
+        <div class="filter-item">
+            <label><i class="fas fa-power-off"></i> 任务状态</label>
+            <select id="filterStatus">
+                <option value="">全部</option>
+                <option value="1">启用</option>
+                <option value="2">停用</option>
+            </select>
+        </div>
+        <div class="filter-item">
+            <label><i class="fas fa-cog"></i> 执行状态</label>
+            <select id="filterRunStatus">
+                <option value="">全部</option>
+                <option value="1">开始执行</option>
+                <option value="2">执行结束</option>
+                <option value="3">执行异常</option>
+                <option value="4">运行中</option>
+            </select>
+        </div>
+        <div class="filter-actions">
+            <button class="btn btn-outline" id="resetFilterBtn"><i class="fas fa-undo-alt"></i>重置</button>
+            <button class="btn btn-primary" id="searchBtn"><i class="fas fa-search"></i>查询</button>
+        </div>
+    </div>
+
+    <!-- 任务列表卡片区 -->
+    <div class="table-card">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>函数名</th>
+                <th>描述</th>
+                <th>Cron表达式</th>
+                <th>NATS主题</th>
+                <th>参数</th>
+                <th>超时</th>
+                <th>锁检查</th>
+                <th>最后执行</th>
+                <th>完成时间</th>
+                <th>任务状态</th>
+                <th>运行状态</th>
+                <th>错误码/信息</th>
+                <th>工程名</th>
+                <th>重试/次数</th>
+                <th>链路ID</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody id="taskTableBody">
+            <!-- 动态渲染任务数据 -->
+            </tbody>
+        </table>
+    </div>
+    <!-- 表格底部可以加简易分页占位，预留后端 -->
+    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <span style="color: #6c85a3; font-size: 13px;"><i class="fas fa-database"></i> 共 <span id="taskCount">0</span> 条任务，接口对接预留</span>
+    </div>
+</div>
+
+<!-- 新增/编辑任务模态框 -->
+<div id="taskModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fas fa-edit"></i> 新建定时任务</h3>
+            <button class="close-btn" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="form-grid">
+            <!-- ID隐藏字段，编辑时使用 -->
+            <input type="hidden" id="taskId" value="">
+            <!-- 核心字段按照模型排布，字段齐全 -->
+            <div class="form-item">
+                <label>执行函数名 <span style="color:#e65a5a;">*</span></label>
+                <input type="text" id="funcName" placeholder="例如: SyncOrderTask" value="">
+            </div>
+            <div class="form-item">
+                <label>任务描述</label>
+                <input type="text" id="description" placeholder="描述信息" value="">
+            </div>
+            <div class="form-item">
+                <label>Cron表达式 <span style="color:#e65a5a;">*</span></label>
+                <input type="text" id="cronExpr" placeholder="0 */5 * * * ?" value="">
+            </div>
+            <div class="form-item">
+                <label>NATS主题/分组</label>
+                <input type="text" id="subject" placeholder="task.subject" value="">
+            </div>
+            <div class="form-item">
+                <label>执行参数</label>
+                <input type="text" id="params" placeholder='{"key":"value"}' value="">
+            </div>
+            <div class="form-item">
+                <label>超时时间</label>
+                <input type="text" id="timeout" placeholder="30s" value="30s">
+            </div>
+            <div class="form-item checkbox-label">
+                <label>锁检查开关</label>
+                <div style="display:flex; align-items:center;">
+                    <input type="checkbox" id="checkLock" style="width:18px; height:18px; margin-left:4px;">
+                    <span style="margin-left: 6px; font-weight: normal;">启用</span>
+                </div>
+            </div>
+            <div class="form-item">
+                <label>工程名称</label>
+                <input type="text" id="projName" placeholder="default-project" value="">
+            </div>
+            <div class="form-item">
+                <label>重试次数 (ReTry)</label>
+                <input type="number" id="reTry" value="0" min="0">
+            </div>
+            <div class="form-item">
+                <label>ReCount</label>
+                <input type="number" id="reCount" value="0" min="0">
+            </div>
+            <div class="form-item full-width">
+                <label>链路ID (ChainId)</label>
+                <input type="text" id="chainId" placeholder="自动生成/预留" value="">
+            </div>
+            <!-- 后端返回的其他字段通常不手动编辑：lastRun, lastEnd, status, runStatus, errorCode, msg 等一般由后端维护。此处仅展示编辑时允许调整任务状态和运行状态，方便测试；实际可按需 -->
+            <div class="form-item">
+                <label>任务状态</label>
+                <select id="status">
+                    <option value="1">启用</option>
+                    <option value="2">停用</option>
+                </select>
+            </div>
+            <div class="form-item">
+                <label>运行状态</label>
+                <select id="runStatus">
+                    <option value="1">开始执行</option>
+                    <option value="2">执行结束</option>
+                    <option value="3">执行异常</option>
+                    <option value="4">运行中</option>
+                </select>
+            </div>
+            <div class="form-item">
+                <label>错误码</label>
+                <input type="number" id="errorCode" value="0" placeholder="0">
+            </div>
+            <div class="form-item full-width">
+                <label>处理信息 (Msg)</label>
+                <textarea id="msg" placeholder="任务执行信息"></textarea>
+            </div>
+            <!-- 只读展示 lastRun lastEnd 可根据后端填充，这里加两个文本字段 -->
+            <div class="form-item">
+                <label>最后执行时间</label>
+                <input type="text" id="lastRun" readonly placeholder="由后端更新" value="">
+            </div>
+            <div class="form-item">
+                <label>最后结束时间</label>
+                <input type="text" id="lastEnd" readonly placeholder="由后端更新" value="">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" id="cancelModalBtn">取消</button>
+            <button class="btn btn-primary" id="saveTaskBtn"><i class="fas fa-save"></i> 保存任务</button>
+        </div>
+    </div>
+</div>
+
+<!-- 模拟消息提示 -->
+<div id="toast" class="toast-message">
+    <i class="fas fa-info-circle"></i> <span id="toastText">提示消息</span>
+</div>
+
+<script>
+    (function() {
+        "use strict";
+
+        // ---------- 模拟本地任务数据集 (前端演示) ----------
+        // 完全基于给定的字段: ID, FuncName, Description, CronExpr, Subject, Params, Timeout, CheckLock,
+        // LastRun, LastEnd, Status, RunStatus, ErrorCode, Msg, ProjName, ReTry, ReCount, ChainId
+        let mockTasks = [
+            { id: "task-001", funcName: "SyncOrder", description: "订单同步任务", cronExpr: "0 */10 * * * ?", subject: "nats.order.sync", params: "{\"batchSize\":100}", timeout: "60s", checkLock: true, lastRun: "2025-04-11 10:10:00", lastEnd: "2025-04-11 10:12:30", status: 1, runStatus: 2, errorCode: 0, msg: "成功同步200条", projName: "电商系统", reTry: 3, reCount: 1, chainId: "chain_xxx_111" },
+            { id: "task-002", funcName: "CleanLog", description: "日志清理", cronExpr: "0 0 2 * * ?", subject: "nats.log.clean", params: "{\"days\":7}", timeout: "120s", checkLock: false, lastRun: "2025-04-12 02:00:00", lastEnd: "2025-04-12 02:05:20", status: 1, runStatus: 2, errorCode: 0, msg: "清理完成", projName: "基础服务", reTry: 2, reCount: 0, chainId: "chain_222" },
+            { id: "task-003", funcName: "SendEmail", description: "定时报表邮件", cronExpr: "0 0 9 * * MON", subject: "nats.email.report", params: "{\"to\":\"admin@xx.com\"}", timeout: "30s", checkLock: true, lastRun: "2025-04-14 09:00:00", lastEnd: "2025-04-14 09:01:10", status: 1, runStatus: 2, errorCode: 0, msg: "邮件已发送", projName: "通知中心", reTry: 1, reCount: 0, chainId: "chain_333" },
+            { id: "task-004", funcName: "BackupDB", description: "数据库备份", cronExpr: "0 0 3 * * ?", subject: "nats.db.backup", params: "--all-databases", timeout: "600s", checkLock: true, lastRun: "2025-04-15 03:00:00", lastEnd: "2025-04-15 03:15:45", status: 2, runStatus: 2, errorCode: 0, msg: "备份完成", projName: "数据平台", reTry: 5, reCount: 2, chainId: "chain_444" },
+            { id: "task-005", funcName: "HealthCheck", description: "节点健康检查", cronExpr: "*/30 * * * * ?", subject: "nats.health.check", params: "{\"timeout\":5}", timeout: "10s", checkLock: false, lastRun: "2025-04-16 14:23:00", lastEnd: "2025-04-16 14:23:05", status: 1, runStatus: 4, errorCode: 1, msg: "连接超时", projName: "监控系统", reTry: 3, reCount: 3, chainId: "chain_555_error" },
+        ];
+
+        // ---------- 全局变量 ----------
+        const taskTableBody = document.getElementById('taskTableBody');
+        const modal = document.getElementById('taskModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+
+        // 过滤相关元素
+        const searchKeyword = document.getElementById('searchKeyword');
+        const filterProjName = document.getElementById('filterProjName');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterRunStatus = document.getElementById('filterRunStatus');
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        const searchBtn = document.getElementById('searchBtn');
+
+        // ---------- 辅助函数 ----------
+        function showToast(message, type = 'success') {
+            toast.classList.add('show');
+            toast.classList.remove('toast-success', 'toast-error');
+            if (type === 'success') toast.classList.add('toast-success');
+            else toast.classList.add('toast-error');
+            toastText.innerText = message;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2800);
+        }
+
+        // 渲染表格 (支持过滤)
+        function renderTasks() {
+            // 获取过滤条件
+            const keyword = searchKeyword.value.toLowerCase().trim();
+            const projNameFilter = filterProjName.value.toLowerCase().trim();
+            const statusFilter = filterStatus.value; // 字符串 '1' '2' ''
+            const runStatusFilter = filterRunStatus.value;
+
+            const filtered = mockTasks.filter(task => {
+                // 文本关键字: 匹配ID、描述、函数名
+                if (keyword) {
+                    if (!task.id?.toLowerCase().includes(keyword) &&
+                        !task.description?.toLowerCase().includes(keyword) &&
+                        !task.funcName?.toLowerCase().includes(keyword)) {
+                        return false;
+                    }
+                }
+                if (projNameFilter) {
+                    if (!task.projName?.toLowerCase().includes(projNameFilter)) return false;
+                }
+                if (statusFilter !== '') {
+                    if (task.status !== parseInt(statusFilter)) return false;
+                }
+                if (runStatusFilter !== '') {
+                    if (task.runStatus !== parseInt(runStatusFilter)) return false;
+                }
+                return true;
+            });
+
+            // 更新计数
+            document.getElementById('taskCount').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                taskTableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding:40px;"><i class="fas fa-inbox" style="color:#b9c8da; font-size:24px;"></i> <p style="color:#6f8fbc;">暂无匹配的任务，请修改条件或新增</p></td></tr>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(task => {
+                // 状态样式
+                const statusLabel = task.status === 1 ? '<span class="badge badge-active">启用</span>' : '<span class="badge badge-inactive">停用</span>';
+                let runStatusLabel = '';
+                switch (task.runStatus) {
+                    case 1: runStatusLabel = '<span class="badge" style="background:#fef9e7; color:#b55f0a;">开始执行</span>'; break;
+                    case 2: runStatusLabel = '<span class="badge" style="background:#e3f2fd; color:#1565c0;">执行结束</span>'; break;
+                    case 3: runStatusLabel = '<span class="badge badge-error">执行异常</span>'; break;
+                    case 4: runStatusLabel = '<span class="badge badge-running">运行中</span>'; break;
+                    default: runStatusLabel = '<span class="badge">未知</span>';
+                }
+                const errorBadge = task.errorCode === 0 ? '<span class="badge badge-normal">正常</span>' : '<span class="badge badge-error">错误</span>';
+                const checkLockIcon = task.checkLock ? '<i class="fas fa-lock" style="color:#0f6e4a;" title="开启"></i>' : '<i class="fas fa-unlock-alt" style="color:#8f9eb5;" title="关闭"></i>';
+
+                html += `<tr>
+                        <td><span style="font-family: monospace;">${task.id || '-'}</span></td>
+                        <td>${task.funcName || '-'}</td>
+                        <td>${task.description || '-'}</td>
+                        <td><code style="background:#f1f5f9; padding:3px 8px; border-radius:12px;">${task.cronExpr || '-'}</code></td>
+                        <td>${task.subject || '-'}</td>
+                        <td>${task.params || '-'}</td>
+                        <td>${task.timeout || '-'}</td>
+                        <td style="text-align:center;">${checkLockIcon}</td>
+                        <td>${task.lastRun || '-'}</td>
+                        <td>${task.lastEnd || '-'}</td>
+                        <td>${statusLabel}</td>
+                        <td>${runStatusLabel}</td>
+                        <td>${errorBadge} ${task.msg ? '<br><span style="font-size:12px; color:#536b8a;">' + task.msg.substring(0,10) + '...</span>' : ''}</td>
+                        <td>${task.projName || '-'}</td>
+                        <td>${task.reTry ?? 0}/${task.reCount ?? 0}</td>
+                        <td><span style="font-family: monospace; background:#f0f4fa; padding:4px 6px; border-radius:8px;">${task.chainId ? task.chainId.substring(0,8)+'…' : '-'}</span></td>
+                        <td class="action-group">
+                            <button class="action-btn edit-btn" data-id="${task.id}" title="编辑"><i class="fas fa-pencil-alt"></i></button>
+                            <button class="action-btn delete-btn" data-id="${task.id}" title="删除"><i class="fas fa-trash-alt"></i></button>
+                            <!-- 预留其他操作如查看详情，可扩展 -->
+                        </td>
+                    </tr>`;
+            });
+            taskTableBody.innerHTML = html;
+
+            // 给编辑、删除按钮绑定事件
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const id = this.dataset.id;
+                    openEditModal(id);
+                });
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const id = this.dataset.id;
+                    deleteTaskById(id);
+                });
+            });
+        }
+
+        // ---------- 打开新增模态框 ----------
+        function openAddModal() {
+            modalTitle.innerHTML = '<i class="fas fa-plus-circle"></i> 新建定时任务';
+            // 清空表单
+            document.getElementById('taskId').value = '';
+            document.getElementById('funcName').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('cronExpr').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('params').value = '';
+            document.getElementById('timeout').value = '30s';
+            document.getElementById('checkLock').checked = false;
+            document.getElementById('projName').value = '';
+            document.getElementById('reTry').value = 0;
+            document.getElementById('reCount').value = 0;
+            document.getElementById('chainId').value = '';
+            document.getElementById('status').value = '1';  // 默认启用
+            document.getElementById('runStatus').value = '2'; // 默认执行结束
+            document.getElementById('errorCode').value = 0;
+            document.getElementById('msg').value = '';
+            document.getElementById('lastRun').value = '';
+            document.getElementById('lastEnd').value = '';
+            modal.classList.add('active');
+        }
+
+        // 编辑模态框：根据ID填充
+        function openEditModal(id) {
+            const task = mockTasks.find(t => t.id === id);
+            if (!task) {
+                showToast('任务不存在', 'error');
+                return;
+            }
+            modalTitle.innerHTML = '<i class="fas fa-edit"></i> 编辑任务';
+            document.getElementById('taskId').value = task.id || '';
+            document.getElementById('funcName').value = task.funcName || '';
+            document.getElementById('description').value = task.description || '';
+            document.getElementById('cronExpr').value = task.cronExpr || '';
+            document.getElementById('subject').value = task.subject || '';
+            document.getElementById('params').value = task.params || '';
+            document.getElementById('timeout').value = task.timeout || '30s';
+            document.getElementById('checkLock').checked = task.checkLock || false;
+            document.getElementById('projName').value = task.projName || '';
+            document.getElementById('reTry').value = task.reTry ?? 0;
+            document.getElementById('reCount').value = task.reCount ?? 0;
+            document.getElementById('chainId').value = task.chainId || '';
+            document.getElementById('status').value = task.status ?? 1;
+            document.getElementById('runStatus').value = task.runStatus ?? 2;
+            document.getElementById('errorCode').value = task.errorCode ?? 0;
+            document.getElementById('msg').value = task.msg || '';
+            document.getElementById('lastRun').value = task.lastRun || '';
+            document.getElementById('lastEnd').value = task.lastEnd || '';
+            modal.classList.add('active');
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        // ---------- 保存任务（新增/更新）对接后端预留 ----------
+        function saveTask() {
+            // 收集表单数据 —— 完全匹配字段
+            const id = document.getElementById('taskId').value;
+            const funcName = document.getElementById('funcName').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const cronExpr = document.getElementById('cronExpr').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const params = document.getElementById('params').value.trim();
+            const timeout = document.getElementById('timeout').value.trim();
+            const checkLock = document.getElementById('checkLock').checked;
+            const projName = document.getElementById('projName').value.trim();
+            const reTry = parseInt(document.getElementById('reTry').value, 10) || 0;
+            const reCount = parseInt(document.getElementById('reCount').value, 10) || 0;
+            const chainId = document.getElementById('chainId').value.trim();
+            const status = parseInt(document.getElementById('status').value, 10);
+            const runStatus = parseInt(document.getElementById('runStatus').value, 10);
+            const errorCode = parseInt(document.getElementById('errorCode').value, 10) || 0;
+            const msg = document.getElementById('msg').value.trim();
+            const lastRun = document.getElementById('lastRun').value.trim();  // 只读，但保留
+            const lastEnd = document.getElementById('lastEnd').value.trim();
+
+            if (!funcName || !cronExpr) {
+                showToast('执行函数名和Cron表达式为必填项', 'error');
+                return;
+            }
+
+            // 构造任务对象
+            const newTask = {
+                id: id || 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                funcName,
+                description,
+                cronExpr,
+                subject,
+                params,
+                timeout,
+                checkLock,
+                projName,
+                reTry,
+                reCount,
+                chainId,
+                status,
+                runStatus,
+                errorCode,
+                msg,
+                lastRun,
+                lastEnd,
+            };
+
+            // 模拟接口：如果是编辑（id存在且在mockTasks中）
+            if (id) {
+                const index = mockTasks.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    // 保留原有ID，更新所有字段
+                    newTask.id = id;
+                    mockTasks[index] = newTask;
+                    showToast('任务更新成功 (后端PUT接口预留)', 'success');
+                } else {
+                    showToast('编辑失败，任务不存在', 'error');
+                    closeModal();
+                    return;
+                }
+            } else {
+                // 新增
+                mockTasks.push(newTask);
+                showToast('任务新增成功 (后端POST接口预留)', 'success');
+            }
+
+            closeModal();
+            renderTasks(); // 刷新表格
+        }
+
+        // ---------- 删除任务（对接预留）----------
+        function deleteTaskById(id) {
+            if (!id) return;
+            if (confirm('确定删除该定时任务吗？此操作不可撤销。')) {
+                const index = mockTasks.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    mockTasks.splice(index, 1);
+                    showToast(`任务[${id}]已删除 (后端DELETE接口预留)`, 'success');
+                    renderTasks();
+                } else {
+                    showToast('任务不存在', 'error');
+                }
+            }
+        }
+
+        // ---------- 重置过滤 ----------
+        function resetFilter() {
+            searchKeyword.value = '';
+            filterProjName.value = '';
+            filterStatus.value = '';
+            filterRunStatus.value = '';
+            renderTasks();
+        }
+
+        // ---------- 事件绑定 ----------
+        function bindEvents() {
+            // 新增
+            document.getElementById('addTaskBtn').addEventListener('click', openAddModal);
+            // 关闭模态框
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+            // 保存
+            document.getElementById('saveTaskBtn').addEventListener('click', saveTask);
+            // 重置过滤
+            resetFilterBtn.addEventListener('click', resetFilter);
+            // 查询按钮
+            searchBtn.addEventListener('click', renderTasks);
+            // 点击模态框背景关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+            // 同时预留回车搜索（简单实现）
+            searchKeyword.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') renderTasks();
+            });
+        }
+
+        // 初始化渲染
+        renderTasks();
+        bindEvents();
+
+        // 暴露部分全局变量方便模拟对接调试 (可移除)
+        window.__mockTasks = mockTasks;  // 方便控制台查看
+    })();
+</script>
+<!-- 说明：所有字段都已呈现在表单/表格中，后端对接请根据前端请求方式实现API -->
+</body>
+</html>

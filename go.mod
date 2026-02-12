@@ -5,15 +5,17 @@ go 1.24.2
 require (
 	github.com/Andrew-M-C/go.timeconv v0.4.0
 	github.com/Masterminds/sprig/v3 v3.3.0
+	github.com/apolloconfig/agollo/v4 v4.3.1
 	github.com/beevik/etree v1.6.0
 	github.com/deatil/go-cryptobin v1.1.1013
 	github.com/dop251/goja v0.0.0-20260106131823-651366fbe6e3
 	github.com/dromara/carbon/v2 v2.6.16
-	github.com/gogf/gf/contrib/config/apollo/v2 v2.10.0
 	github.com/gogf/gf/v2 v2.10.0
 	github.com/gurkankaymak/hocon v1.2.23
 	github.com/marcboeker/go-duckdb/v2 v2.4.3
 	github.com/nats-io/nats-server/v2 v2.12.4
+	github.com/nats-io/nats.go v1.48.0
+	github.com/syndtr/goleveldb v1.0.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/text v0.33.0
@@ -26,7 +28,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.5.0-default-no-op // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
-	github.com/apolloconfig/agollo/v4 v4.3.1 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
 	github.com/duckdb/duckdb-go-bindings v0.1.21 // indirect
@@ -43,6 +44,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect

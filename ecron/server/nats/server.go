@@ -6,9 +6,9 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/os/gfile"
+	"github.com/nats-io/nats-server/v2/server"
 	"go.uber.org/automaxprocs/maxprocs"
 	"os"
-	"github.com/nats-io/nats-server/v2/server"
 )
 
 var usageStr = `
@@ -102,7 +102,7 @@ func NatsServer(name ...string) {
 
 	}
 	if flagboll {
-		var confPath = []string{"config.conf", "config/config.conf", "resources/config.conf"}
+		var confPath = []string{"nats.conf", "config/nats.conf", "resources/nats.conf"}
 		for _, s := range confPath {
 			_, err := os.Stat(s)
 			if err == nil {
@@ -119,9 +119,12 @@ func NatsServer(name ...string) {
 		fs.Usage,
 		server.PrintTLSHelpAndDie)
 	if err != nil {
-		server.PrintAndDie(fmt.Sprintf("%s: %s", exe, err))
+		g.Log().Error(gctx.GetInitCtx(), err.Error())
+		os.Exit(0)
+		//server.PrintAndDie(fmt.Sprintf("%s: %s", exe, err))
 	} else if opts.CheckConfig {
-		fmt.Fprintf(os.Stderr, "%s: configuration file %s is valid (%s)\n", exe, opts.ConfigFile, opts.ConfigDigest())
+		g.Log().Errorf(gctx.GetInitCtx(), "%s: configuration file %s is valid (%s)\n", exe, opts.ConfigFile, opts.ConfigDigest())
+		//fmt.Fprintf(os.Stderr, "%s: configuration file %s is valid (%s)\n", exe, opts.ConfigFile, opts.ConfigDigest())
 		os.Exit(0)
 	}
 	if opts.LogFile != "" && !gfile.Exists(gfile.Dir(opts.LogFile)) {
