@@ -709,7 +709,7 @@
                         <td>${errorBadge} ${task.msg ? '<br><span style="font-size:12px; color:#536b8a;">' + task.msg.substring(0,10) + '...</span>' : ''}</td>
                         <td>${task.projName || '-'}</td>
                         <td>${task.reTry ?? 0}/${task.reCount ?? 0}</td>
-                        <td><span style="font-family: monospace; background:#f0f4fa; padding:4px 6px; border-radius:8px;">${task.chainId ? task.chainId.substring(0,8)+'…' : '-'}</span></td>
+                        <td><span style="font-family: monospace; background:#f0f4fa; padding:4px 6px; border-radius:8px;">${task.chainId ? task.chainId : '-'}</span></td>
                         <td class="action-group">
                             <button class="action-btn edit-btn" data-id="${task.id}" title="编辑"><i class="fas fa-pencil-alt"></i></button>
                             <button class="action-btn delete-btn" data-id="${task.id}" title="删除"><i class="fas fa-trash-alt"></i></button>

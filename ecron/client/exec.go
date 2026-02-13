@@ -35,6 +35,10 @@ func getCronConfigByMsg(msg *nats.Msg) (model.CronJob, error) {
 
 // 定时任务执行的订阅
 func ExecSubscribe(subj string, name string) error {
+	if subj == "" {
+		return errors.New("订阅主题不能为空 cron.subjectName")
+	}
+
 	queue := "ExecCronRequest" // 固定参数，方便单一订阅
 	_, alreadyExists := startMap.LoadOrStore(subj, struct{}{})
 	if alreadyExists {
@@ -43,6 +47,9 @@ func ExecSubscribe(subj string, name string) error {
 	get, err2 := g.Cfg().Get(gctx.GetInitCtx(), "cron.projectName")
 	if err2 == nil && get.String() != "" {
 		name = get.String()
+	}
+	if name == "" {
+		return errors.New("未设置定时来源名称 cron.projectName")
 	}
 	ips, err2 := gipv4.GetIntranetIp()
 	if err2 == nil && ips != "" {

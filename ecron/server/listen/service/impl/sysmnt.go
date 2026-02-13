@@ -27,7 +27,10 @@ func (c *SysNmtDb) AddCron(ctx context.Context, m model.CronJob) (string, error)
 }
 
 func (c *SysNmtDb) InsertCronLog(ctx context.Context, m model.CronJob) (string, error) {
-
+	one, err := c.GetCronOne(ctx, m.GetKey())
+	if err == nil && one.ID != "" {
+		m.Status = one.Status
+	}
 	return c.AddCron(ctx, m)
 }
 

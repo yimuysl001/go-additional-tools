@@ -6,17 +6,17 @@ import (
 )
 
 type CronExec struct {
-	ID          string `json:"id"`        // 主键ID
-	CronExpr    string `json:"cron_expr"` // Cron表达式
-	Params      string `json:"params"`    // 执行参数
+	ID          string `json:"id"`       // 主键ID
+	CronExpr    string `json:"cronExpr"` // Cron表达式
+	Params      string `json:"params"`   // 执行参数
 	Type        CronSubj
-	FuncName    string `json:"func_name"`   // 执行函数名
+	FuncName    string `json:"funcName"`    // 执行函数名
 	Description string `json:"description"` // 任务描述
 	Subject     string `json:"subject"`     // NATS主题/分组
 	Timeout     string `json:"timeout"`     // 超时时间
-	CheckLock   bool   `json:"check_lock"`  // 锁检查开关
-	ProjName    string `json:"proj_name"`   // 工程名称
-	ReTry       int    `json:"re_try"`
+	CheckLock   bool   `json:"checkLock"`   // 锁检查开关
+	ProjName    string `json:"projName"`    // 工程名称
+	ReTry       int    `json:"reTry"`
 }
 
 type CronExecOpt func(o *CronExec)

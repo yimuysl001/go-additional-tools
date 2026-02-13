@@ -9,7 +9,6 @@ import (
 	"github.com/gogf/gf/v2/os/gcron"
 	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/os/gtime"
-	"github.com/gogf/gf/v2/util/gconv"
 	"github.com/nats-io/nats.go"
 	"go-additional-tools/ecron/mid"
 	"go-additional-tools/ecron/model"
@@ -19,6 +18,7 @@ import (
 )
 
 func getSubjCount(ctx context.Context, subj string) int {
+	g.Log().Info(ctx, "getSubjCount:", subj)
 	var query = []byte(`{"subscriptions":true,"filter_subject":"` + subj + `"}`)
 	request, err := mid.Nats(model.ExecNats).Request(ctx, "$SYS.REQ.SERVER.PING.CONNZ", query, 2*time.Second)
 	if err != nil {
@@ -150,8 +150,9 @@ func StartCron(ctxN context.Context, config model.CronJob) error {
 	ctx := gctx.New()
 	jobConfig.ChainId = gctx.CtxId(ctx)
 	jobConfig.ReCount = 0
-	_, err := gcron.AddSingleton(gctx.New(), jobConfig.CronExpr, func(ctx context.Context) {
+	_, err := gcron.AddSingleton(ctx, jobConfig.CronExpr, func(ctx context.Context) {
 		defer func() {
+			g.Log().Info(ctx, ckey+":"+jobConfig.Description+":结束执行")
 			if r := recover(); r != nil {
 				g.Log().Error(ctx, "panic occurred:", r)
 				jobConfig.RunStatus = 3
@@ -165,6 +166,7 @@ func StartCron(ctxN context.Context, config model.CronJob) error {
 				//}()
 			}
 		}()
+		g.Log().Info(ctx, ckey+":"+jobConfig.Description+":开始执行")
 
 		jobConfig.Status = 1
 		if jobConfig.RunStatus != 4 {
@@ -173,14 +175,35 @@ func StartCron(ctxN context.Context, config model.CronJob) error {
 			service.GetCronService().InsertCronLog(ctx, jobConfig)
 		}
 
-		request, err2 := ExecRequest(ctx, &jobConfig)
+		var (
+			err2    error
+			request string
+		)
+		jobConfig.ReCount = 1
+		for {
+			request, err2 = ExecRequest(ctx, &jobConfig)
+			if err2 == nil || !errors.Is(err2, nats.ErrNoResponders) || jobConfig.ReTry <= 0 || jobConfig.ReCount >= jobConfig.ReTry {
+				break
+			}
+			g.Log().Info(ctx, "未查询到订阅者，尝试重试")
+			timed := 5 * time.Second
+			if jobConfig.Timeout != "" {
+				timed, _ = gtime.ParseDuration(jobConfig.Timeout)
+			}
+			if timed <= 0 {
+				timed = 5 * time.Second
+			}
+			service.GetCronService().InsertCronLog(ctx, jobConfig)
+			time.Sleep(timed)
+			jobConfig.ReCount = jobConfig.ReCount + 1
+			g.Log().Info(ctx, "第", jobConfig.ReTry, "/", jobConfig.ReCount, "重试/次数重试")
+		}
 
 		jobConfig.Msg = request
 		if err2 != nil {
 			updateConfigOnError(ctx, &jobConfig, err2)
 			return
 		}
-		config.ReCount = 0
 		jobConfig.RunStatus = 2
 
 	}, ckey)
@@ -192,21 +215,21 @@ func updateConfigOnError(ctx context.Context, config *model.CronJob, err error) 
 
 	if errors.Is(err, nats.ErrNoResponders) {
 		config.ErrorCode = 0
-		config.Msg = "无订阅者，停止定时任务：重试第" + gconv.String(config.ReCount) + "次"
-		if config.ReCount > config.ReTry {
-			config.RunStatus = 2
-			service.GetCronService().StopCron(ctx, *config)
+		config.Msg = "无订阅者，停止定时任务"
+		_, err2 := service.GetCronService().StopCron(ctx, *config)
+		if err2 != nil {
+			g.Log().Error(ctx, "service.GetCronService().StopCron:"+err2.Error())
+		} else {
+			g.Log().Info(ctx, "定时停止完成")
 		}
-		config.ReCount = config.ReCount + 1
-	} else if strings.Contains(err.Error(), "存在订阅未完成") {
+	} else if strings.Contains(err.Error(), "存在订阅未完成") || errors.Is(err, nats.ErrTimeout) {
 		config.RunStatus = 4
 		config.Msg = "存在订阅未完成"
-		config.ReCount = 0
 	} else {
 		config.RunStatus = 3
 		config.ErrorCode = 1
 		config.Msg = err.Error()
-		config.ReCount = 0
+
 	}
 }
 
