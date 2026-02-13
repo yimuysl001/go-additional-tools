@@ -44,17 +44,6 @@ func ExecSubscribe(subj string, name string) error {
 	if alreadyExists {
 		return nil
 	}
-	get, err2 := g.Cfg().Get(gctx.GetInitCtx(), "cron.projectName")
-	if err2 == nil && get.String() != "" {
-		name = get.String()
-	}
-	if name == "" {
-		return errors.New("未设置定时来源名称 cron.projectName")
-	}
-	ips, err2 := gipv4.GetIntranetIp()
-	if err2 == nil && ips != "" {
-		name = name + "(" + ips + ")"
-	}
 
 	// 执行定时任务
 	err := mid.Nats(model.ExecNats).SubscribeRequest(subj, queue, func(subj, queue string, msg *nats.Msg) (context.Context, []byte, error) {
@@ -145,11 +134,28 @@ func AddCronRequest(ctx context.Context, p model.CronExec, f ExecFunc) (string, 
 		p.Subject = get.String()
 	}
 
+	if p.Subject == "" {
+		return "", errors.New("未设置定时任务订阅主题 cron.subjectName")
+	}
+
+	get, err2 = g.Cfg().Get(gctx.GetInitCtx(), "cron.projectName")
+	if err2 == nil && get.String() != "" {
+		p.ProjName = get.String()
+	}
+	if p.ProjName == "" {
+		return "", errors.New("未设置定时来源名称 cron.projectName")
+	}
+	ips, err2 := gipv4.GetIntranetIp()
+	if err2 == nil && ips != "" {
+		p.ProjName = p.ProjName + "(" + ips + ")"
+	}
+
 	RegisterIExecService(p.FuncName, f)
 	err := ExecSubscribe(p.Subject, p.ProjName)
 	if err != nil {
 		return "", err
 	}
+
 	modl := model.CronJob{
 		ID:          p.ID,
 		FuncName:    p.FuncName,
@@ -164,6 +170,7 @@ func AddCronRequest(ctx context.Context, p model.CronExec, f ExecFunc) (string, 
 		Timeout:     p.Timeout,
 		CheckLock:   p.CheckLock,
 		ReTry:       p.ReTry,
+		ProjName:    p.ProjName,
 	}
 	var sujson = gjson.New(modl).MustToJson()
 
