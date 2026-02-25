@@ -47,8 +47,22 @@ func Encrypt(data []byte) (string, error) {
 
 }
 
-func Decrypt(content string) ([]byte, error) {
-	decrypt := crypto.FromBase64String(content).SetKey(localKey).SM4().CBC().SetIv(localIv).PKCS7Padding().Decrypt()
+func EncryptHex(data []byte) (string, error) {
+
+	gzip, err := gcompress.Gzip(data, grand.N(1, 9))
+	if err != nil {
+		return "", err
+	}
+	encrypt := crypto.FromBytes(gzip).SetKey(localKey).SM4().CBC().SetIv(localIv).PKCS7Padding().Encrypt()
+	if err = encrypt.Error(); err != nil {
+		return "", err
+	}
+	return encrypt.ToHexString(), nil
+
+}
+
+func DecryptHex(content string) ([]byte, error) {
+	decrypt := crypto.FromHexString(content).SetKey(localKey).SM4().CBC().SetIv(localIv).PKCS7Padding().Decrypt()
 	if err := decrypt.Error(); err != nil {
 		return nil, err
 	}

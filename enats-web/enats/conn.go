@@ -189,9 +189,11 @@ func (n *NatsCli) WebSubscribe(subj string, f HandlerFunc) error {
 			err = msg.RespondMsg(ctxl.GetResponseMsg())
 			if err != nil {
 				g.Log().Error(ctxl, "webSubscribe:", err)
+				panic(err)
 			}
 
 		}, func(ctx context.Context, exception error) {
+
 			ctxl.SetResponseError(exception)
 			err := msg.RespondMsg(ctxl.GetResponseMsg())
 			if err != nil {

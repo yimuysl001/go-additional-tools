@@ -71,6 +71,7 @@ func (c *MsgContext) SetResponseHeader(key string, value string) {
 }
 
 func (c *MsgContext) SetResponseError(err error, status ...string) {
+	c.resp.Data = []byte(err.Error())
 	c.resp.Header.Set(RespondErrorHeader, err.Error())
 	if len(status) > 0 && status[0] != "" {
 		c.resp.Header.Set(RespondStatus, status[0])

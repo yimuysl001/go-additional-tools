@@ -4,6 +4,7 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gctx"
+	"github.com/gogf/gf/v2/os/gfile"
 	"go-additional-tools/econf"
 	"go-additional-tools/enats-web/enats"
 	"go-additional-tools/enats-web/eserver"
@@ -54,6 +55,13 @@ func natsWebSample() {
 		g.Log().Info(ctx, "GetMsgMethod", ctx.GetMsgMethod())
 		g.Log().Info(ctx, "GetMsgUrlPath", ctx.GetMsgUrlPath())
 		ctx.SetResponseBody([]byte("接收成功"))
+		return nil
+	})
+
+	s.Get("/static/pdf", func(ctx *enats.MsgContext) error {
+
+		ctx.SetResponseBody(gfile.GetBytes("E:\\data\\xwechat_files\\wxid_rj8zox9d5ol222_5f9f\\msg\\file\\2026-02\\Coati 介绍.pdf"))
+
 		return nil
 	})
 
