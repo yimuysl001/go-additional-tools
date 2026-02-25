@@ -3,6 +3,7 @@ package egoja
 import (
 	"context"
 	"fmt"
+	"github.com/dop251/goja"
 	"github.com/gogf/gf/v2/os/gctx"
 	"go-additional-tools/egoja/pkgs"
 	"go-additional-tools/egoja/require"
@@ -91,6 +92,50 @@ return index+1
 	wg.Wait()
 }
 
+func TestScript4(t *testing.T) {
+	var wg sync.WaitGroup
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			id, err := ExecScriptById(gctx.New(), "test", `
+var ccc =  index+1
+return  ctx.Value("vm").Get("ccc")
+`, map[string]any{"index": i})
+			fmt.Println("结果：", id, err)
+		}()
+	}
+	wg.Wait()
+}
+
+func TestScript5(t *testing.T) {
+	//	id, err := ExecScriptById(gctx.New(), "test", `
+	//  var foo = "bar";
+	//return  ctx.Value("vm").Get("foo")
+	//`, map[string]any{"index": 123})
+	//	fmt.Println("结果：", id, err)
+
+	vm := goja.New()
+
+	// 注册一个函数，通过闭包持有 vm
+	vm.Set("getGlobal", func(call goja.FunctionCall) goja.Value {
+		name := call.Arguments[0].String()
+		val := vm.Get(name) // 使用闭包捕获的 vm
+		return val
+	})
+
+	// 脚本中调用
+	a, e := vm.RunString(`(function() {
+ 				  var foo = "bar";
+    return getGlobal("foo"); // 输出 "bar"
+        })()
+  
+`)
+	fmt.Println(a, e)
+
+}
+
 func TestGoScript(t *testing.T) {
 	pkgs.GoEnv()
 
@@ -105,7 +150,11 @@ import * as strings from 'strings'
 var sb1 = strings.Builder
 var sb2 = strings.Builder
 sb1.WriteString("123==>")
-sb1.WriteString(index+'')
+
+for (var i = 0; i < 10; i++) { 
+  sb1.WriteString((index+i)+'')
+ }
+
 sb2.WriteString("=================\n")
 sb2.WriteString(sb1.String())
 return sb2.String()

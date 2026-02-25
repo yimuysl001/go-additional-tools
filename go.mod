@@ -12,13 +12,16 @@ require (
 	github.com/dromara/carbon/v2 v2.6.16
 	github.com/gogf/gf/v2 v2.10.0
 	github.com/gurkankaymak/hocon v1.2.23
+	github.com/josephspurrier/goversioninfo v1.5.0
 	github.com/marcboeker/go-duckdb/v2 v2.4.3
 	github.com/nats-io/nats-server/v2 v2.12.4
 	github.com/nats-io/nats.go v1.48.0
 	github.com/syndtr/goleveldb v1.0.0
+	github.com/yuin/gopher-lua v1.1.1
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/text v0.33.0
+	layeh.com/gopher-luar v1.0.11
 )
 
 require (
@@ -26,6 +29,7 @@ require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.3.0 // indirect
+	github.com/akavel/rsrc v0.10.2 // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.5.0-default-no-op // indirect
 	github.com/apache/arrow-go/v18 v18.4.1 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect

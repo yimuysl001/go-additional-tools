@@ -35,6 +35,7 @@ func ExecScript(ctx context.Context, script string, params map[string]any, d ...
 		vm.Set(k, v)
 	}
 	vm.Set("ctx", ctx)
+	//vm.Set("vm", &VMWrapper{vm: vm})
 	if len(d) > 0 && d[0] > 0 {
 		time.AfterFunc(d[0], func() {
 			vm.Interrupt("time out")
@@ -65,7 +66,9 @@ func ExecScriptById(ctx context.Context, id, script string, params map[string]an
 	for k, v := range params {
 		vm.Set(k, v)
 	}
+	//ctx = context.WithValue(ctx, "vm", &VMWrapper{vm: vm})
 	vm.Set("ctx", ctx)
+	//vm.Set("vm", )
 
 	if len(d) > 0 && d[0] > 0 {
 		time.AfterFunc(d[0], func() {

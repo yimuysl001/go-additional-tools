@@ -1,0 +1,39 @@
+2026-02-25T10:46:46.294+08:00 [DEBU] {a85d90e7565d97187d6e5138cf1d07c3} E:/wk/git/go-additional-tools/enats-web/enats/server.go:144: 服务启动
+2026-02-25T10:46:46.318+08:00 [DEBU] {a85d90e7565d97187d6e5138cf1d07c3} E:/wk/git/go-additional-tools/enats-web/enats/server.go:149: 启动完成
+2026-02-25T10:47:22.570+08:00 [DEBU] E:/wk/git/go-additional-tools/enats-web/enats/conn.go:43: nats config is null
+2026-02-25T10:47:22.571+08:00 [INFO] E:/wk/git/go-additional-tools/enats-web/sample/main.go:59: start auth server
+2026-02-25T10:47:22.575+08:00 [DEBU] {7c531f5e5f5d97186b8532354e50b7bd} E:/wk/git/go-additional-tools/enats-web/enats/server.go:144: 服务启动
+2026-02-25T10:47:22.590+08:00 [DEBU] {7c531f5e5f5d97186b8532354e50b7bd} E:/wk/git/go-additional-tools/enats-web/enats/server.go:149: 启动完成
+2026-02-25T10:49:20.406+08:00 [DEBU] E:/wk/git/go-additional-tools/enats-web/enats/conn.go:43: nats config is null
+2026-02-25T10:49:20.408+08:00 [INFO] E:/wk/git/go-additional-tools/enats-web/sample/main.go:59: start auth server
+2026-02-25T10:49:20.412+08:00 [DEBU] {2045b8cd7a5d97182eab3212a1d1b650} E:/wk/git/go-additional-tools/enats-web/enats/server.go:144: 服务启动
+2026-02-25T10:49:20.436+08:00 [DEBU] {2045b8cd7a5d97182eab3212a1d1b650} E:/wk/git/go-additional-tools/enats-web/enats/server.go:149: 启动完成
+2026-02-25T10:52:10.281+08:00 [ERRO] E:/wk/git/go-additional-tools/enats-web/enats/conn.go:91: NATS Connect Error:dial tcp 127.0.0.1:4222: connectex: No connection could be made because the target machine actively refused it. 
+Stack:
+1.  go-additional-tools/enats-web/enats.Nats.func1
+    E:/wk/git/go-additional-tools/enats-web/enats/conn.go:91
+2.  go-additional-tools/enats-web/enats.Nats
+    E:/wk/git/go-additional-tools/enats-web/enats/conn.go:23
+3.  go-additional-tools/enats-web/eserver.NewServer
+    E:/wk/git/go-additional-tools/enats-web/eserver/server.go:29
+4.  main.natsWebSample
+    E:/wk/git/go-additional-tools/enats-web/sample/main.go:31
+5.  main.main
+    E:/wk/git/go-additional-tools/enats-web/sample/main.go:16
+
+2026-02-25T10:52:10.283+08:00 [INFO] E:/wk/git/go-additional-tools/enats-web/sample/main.go:59: start auth server
+2026-02-25T10:52:10.286+08:00 [DEBU] {2c30025ba25d971817e7e15b20e66299} E:/wk/git/go-additional-tools/enats-web/enats/server.go:144: 服务启动
+2026-02-25T10:52:10.302+08:00 [DEBU] {2c30025ba25d971817e7e15b20e66299} E:/wk/git/go-additional-tools/enats-web/enats/server.go:149: 启动完成
+2026-02-25T10:53:54.581+08:00 [DEBU] {c8756fa3ba5d97183bcf18541bb2ecd7} E:/wk/git/go-additional-tools/enats-web/enats/server.go:144: 服务启动
+2026-02-25T10:53:54.598+08:00 [DEBU] {c8756fa3ba5d97183bcf18541bb2ecd7} E:/wk/git/go-additional-tools/enats-web/enats/server.go:149: 启动完成
+2026-02-25T10:53:55.577+08:00 [INFO] {c8756fa3ba5d97183bcf18541bb2ecd7} E:/wk/git/go-additional-tools/enats-web/sample/main.go:61: start auth server
+2026-02-25T10:54:39.851+08:00 [INFO] {e852c42dc55d971842cf1854fe9a3ef8} {e852c42dc55d971841cf1854da82c893} E:/wk/git/go-additional-tools/enats-web/sample/main.go:53: test request
+2026-02-25T10:54:39.851+08:00 [INFO] {e852c42dc55d971842cf1854fe9a3ef8} {e852c42dc55d971841cf1854da82c893} E:/wk/git/go-additional-tools/enats-web/sample/main.go:54: GetMsgMethod GET
+2026-02-25T10:54:39.851+08:00 [INFO] {e852c42dc55d971842cf1854fe9a3ef8} {e852c42dc55d971841cf1854da82c893} E:/wk/git/go-additional-tools/enats-web/sample/main.go:55: GetMsgUrlPath test
+2026-02-25T10:54:52.437+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:38: test middleware1
+2026-02-25T10:54:52.438+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:46: test middleware3
+2026-02-25T10:54:52.438+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:53: test request
+2026-02-25T10:54:52.438+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:54: GetMsgMethod GET
+2026-02-25T10:54:52.438+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:55: GetMsgUrlPath test/ccc
+2026-02-25T10:54:52.438+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:48: test middleware3
+2026-02-25T10:54:52.438+08:00 [INFO] {9c29f81bc85d971844cf18546d26a2b5} {9c29f81bc85d971843cf18543e0cfc04} E:/wk/git/go-additional-tools/enats-web/sample/main.go:43: test middleware2

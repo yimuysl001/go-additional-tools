@@ -5,6 +5,7 @@ import (
 	"go-additional-tools/ecron/server/listen"
 )
 
+// //go:generate goversioninfo -icon=icon.ico
 func main() {
 	econf.MustInitConf()
 
