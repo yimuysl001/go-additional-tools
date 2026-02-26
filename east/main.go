@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -25,11 +26,13 @@ func main() {
 		if strings.HasSuffix(pkg.Name, "_test") {
 			continue
 		}
-		generateRegisterCode(pkgName, pkg, pname, fset)
+		s := generateRegisterCode(pkgName, pkg, pname, fset)
+
+		fmt.Println(s)
 	}
 }
 
-func generateRegisterCode(importPkg string, pkg *ast.Package, pname string, fset *token.FileSet) {
+func generateRegisterCode(importPkg string, pkg *ast.Package, pname string, fset *token.FileSet) string {
 	registerMap := make(map[string][]string)
 	comments := make(map[string]string)
 
@@ -67,10 +70,10 @@ func generateRegisterCode(importPkg string, pkg *ast.Package, pname string, fset
 			}
 		}
 	}
-
+	var sb bytes.Buffer
 	// 生成注册代码
-	fmt.Printf("\n// Register imports for package %s\n", importPkg)
-	fmt.Printf("RegisterImport(%q, map[string]any{\n", importPkg)
+	fmt.Fprintf(&sb, "\n// Register imports for package %s\n", importPkg)
+	fmt.Fprintf(&sb, "RegisterImport(%q, map[string]any{\n", importPkg)
 
 	// 按类别组织
 	categories := []string{"funcs", "structs"}
@@ -86,24 +89,26 @@ func generateRegisterCode(importPkg string, pkg *ast.Package, pname string, fset
 				if cat == "funcs" && (strings.HasPrefix(item, "Benchmark_") || strings.HasPrefix(item, "Test_")) {
 					continue
 				}
+
 				if comment, ok := comments[item]; ok {
 					// 格式化注释
 					comment = strings.TrimSpace(comment)
 					comment = strings.ReplaceAll(comment, "\n", "\n\t// ")
-					fmt.Printf("\t// %s\n", comment)
+					fmt.Fprintf(&sb, "\t// %s\n", comment)
 				}
 				if cat == "structs" {
-					fmt.Printf("\t%q: %s.%s,\n", item, pname, item+"{}")
+					fmt.Fprintf(&sb, "\t%q: %s.%s,\n", item, pname, item+"{}")
 
 				} else {
-					fmt.Printf("\t%q: %s.%s,\n", item, pname, item)
+					fmt.Fprintf(&sb, "\t%q: %s.%s,\n", item, pname, item)
 				}
 
 			}
 		}
 	}
 
-	fmt.Printf("})\n")
+	fmt.Fprintf(&sb, "})\n")
+	return sb.String()
 }
 func IsFirstLetterUpper(s string) bool {
 	if len(s) == 0 {

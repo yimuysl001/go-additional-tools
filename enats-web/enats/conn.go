@@ -174,6 +174,15 @@ func (n *NatsCli) WebRequest(r *ghttp.Request, timeout time.Duration) (*nats.Msg
 	return n.ns.RequestMsg(msg, timeout)
 }
 
+func (n *NatsCli) WebRequestCtx(ctx context.Context, subj, url string, body []byte, timeout time.Duration) (*nats.Msg, error) {
+	if n.err != nil {
+		return nil, n.err
+	}
+	msg := NewMsg(ctx, webPre+subj, body)
+	msg.Header.Set(RequestUrlPath, url)
+	return n.ns.RequestMsg(msg, timeout)
+}
+
 func (n *NatsCli) WebSubscribe(subj string, f HandlerFunc) error {
 	if n.err != nil {
 		return n.err

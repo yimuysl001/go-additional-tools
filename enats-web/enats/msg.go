@@ -2,6 +2,7 @@ package enats
 
 import (
 	"context"
+	"encoding/base64"
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
@@ -12,11 +13,12 @@ import (
 
 // NewMsg 创建带跟踪ID的消息
 func NewMsgByRequest(r *ghttp.Request) *nats.Msg {
+
 	var (
 		ctx     = r.Context()
-		subj    = r.Get("subj").String()
+		subj    = r.GetRouter("subj").String()
 		method  = r.Method
-		url     = r.Get("act").String()
+		url     = r.GetRouter("act").String()
 		headers = r.Request.Header
 		param   = r.GetRequestMap()
 		body    = r.GetBody()
@@ -26,37 +28,54 @@ func NewMsgByRequest(r *ghttp.Request) *nats.Msg {
 	for k, v := range headers {
 		for i, v := range v {
 			if i == 0 {
-				msg.Header.Set(k, v)
+				SetHeaderString(msg, k, v)
 			} else {
-				msg.Header.Add(k, v)
+				AddHeaderString(msg, k, v)
 			}
 		}
 	}
 
 	// 添加请求方法到消息头
-	msg.Header.Set(RequestMethod, method)
+	SetHeaderString(msg, RequestMethod, method)
 
 	// 添加请求路径到消息头
-	msg.Header.Set(RequestUrlPath, url)
+	SetHeaderString(msg, RequestUrlPath, url)
 
 	// 添加请求参数到消息头
-	msg.Header.Set(RequestParam, gjson.New(param).MustToJsonString())
+	SetHeaderString(msg, RequestParam, gjson.New(param).MustToJsonString())
 
 	// 添加请求追踪ID到消息头
 	value := ctx.Value(RespondTraceId)
 	if value != nil {
-		msg.Header.Set(RespondTraceHeader, gconv.String(value))
+		SetHeaderString(msg, RespondTraceHeader, gconv.String(value))
 	} else {
-		msg.Header.Set(RespondTraceHeader, gctx.CtxId(ctx))
+		SetHeaderString(msg, RespondTraceHeader, gctx.CtxId(ctx))
 	}
-	msg.Header.Set(RespondConsumerKey, g.Cfg().MustGet(ctx, consumerKeyPath, "").String())
+	SetHeaderString(msg, RespondConsumerKey, g.Cfg().MustGet(ctx, consumerKeyPath, "").String())
 
 	msg.Data = body
 	return msg
 }
 
+func SetHeaderString(msg *nats.Msg, key string, valus string) {
+	msg.Header.Set(key, base64.StdEncoding.EncodeToString([]byte(valus)))
+}
+func AddHeaderString(msg *nats.Msg, key string, valus string) {
+	msg.Header.Add(key, base64.StdEncoding.EncodeToString([]byte(valus)))
+}
+func GetHeaderString(msg *nats.Msg, key string) string {
+	get := msg.Header.Get(key)
+	if get == "" {
+		return ""
+	}
+	decodeString, err := base64.StdEncoding.DecodeString(get)
+	if err != nil {
+		return get
+	}
+	return string(decodeString)
+}
 func GetMsgParam(msg *nats.Msg) *gjson.Json {
-	return gjson.New(msg.Header.Get(RequestParam))
+	return gjson.New(GetHeaderString(msg, RequestParam))
 }
 
 func GetMsgData(msg *nats.Msg) []byte {
@@ -64,15 +83,15 @@ func GetMsgData(msg *nats.Msg) []byte {
 }
 
 func GetMsgMethod(msg *nats.Msg) string {
-	return msg.Header.Get(RequestMethod)
+	return GetHeaderString(msg, RequestMethod)
 }
 
 func GetMsgUrlPath(msg *nats.Msg) string {
-	return msg.Header.Get(RequestUrlPath)
+	return GetHeaderString(msg, RequestUrlPath)
 }
 
 func GetMsgTraceId(msg *nats.Msg) string {
-	return msg.Header.Get(RespondTraceHeader)
+	return GetHeaderString(msg, RespondTraceHeader)
 }
 func GetMsgCtx(msg *nats.Msg) context.Context {
 	ctx := context.WithValue(gctx.New(), RespondTraceId, GetMsgTraceId(msg))
@@ -89,10 +108,14 @@ func GetRequestMsg(ctx context.Context) *nats.Msg {
 }
 
 func GetMsgHeader(msg *nats.Msg) map[string][]string {
-	return msg.Header
+	m := make(map[string][]string)
+	for k, _ := range msg.Header {
+		m[k] = []string{GetMsgHeaderString(msg, k)}
+	}
+	return m
 }
 func GetMsgHeaderString(msg *nats.Msg, key string) string {
-	return msg.Header.Get(key)
+	return GetHeaderString(msg, key)
 }
 
 // NewMsg 创建带跟踪ID的消息
@@ -102,17 +125,17 @@ func NewMsg(ctx context.Context, subj string, data []byte) *nats.Msg {
 	// 添加请求追踪ID到消息头
 	value := ctx.Value(RespondTraceId)
 	if value != nil {
-		msg.Header.Set(RespondTraceHeader, gconv.String(value))
+		SetHeaderString(msg, RespondTraceHeader, gconv.String(value))
 	} else {
-		msg.Header.Set(RespondTraceHeader, gctx.CtxId(ctx))
+		SetHeaderString(msg, RespondTraceHeader, gctx.CtxId(ctx))
 	}
-	msg.Header.Set(RespondConsumerKey, g.Cfg().MustGet(ctx, consumerKeyPath, "").String())
+	SetHeaderString(msg, RespondConsumerKey, g.Cfg().MustGet(ctx, consumerKeyPath, "").String())
 	return msg
 
 }
 
 func SetResponseHeader(msg *nats.Msg, key, value string) {
-	msg.Header.Set(key, value)
+	SetHeaderString(msg, key, value)
 
 }
 
@@ -127,11 +150,11 @@ func GetProjName(msg *nats.Msg) string {
 }
 
 func GetErrorMsg(msg *nats.Msg) string {
-	return msg.Header.Get(RespondErrorHeader)
+	return GetHeaderString(msg, RespondErrorHeader)
 }
 
 func GetStatusMsg(msg *nats.Msg) string {
-	status := msg.Header.Get(RespondStatus)
+	status := GetHeaderString(msg, RespondStatus)
 	if status == "" {
 		status = "200"
 	}

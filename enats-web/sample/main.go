@@ -14,7 +14,7 @@ import (
 func main() {
 	econf.MustInitConf() // 初始化配置
 
-	go enats.NatsServer() // 启用nats
+	//go enats.NatsServer() // 启用nats
 	time.Sleep(time.Second)
 	natsWebSample() // 启用测试模块
 
@@ -54,6 +54,7 @@ func natsWebSample() {
 		g.Log().Info(ctx, "test request")
 		g.Log().Info(ctx, "GetMsgMethod", ctx.GetMsgMethod())
 		g.Log().Info(ctx, "GetMsgUrlPath", ctx.GetMsgUrlPath())
+		g.Log().Info(ctx, "Params", ctx.GetMsgParam())
 		ctx.SetResponseBody([]byte("接收成功"))
 		return nil
 	})

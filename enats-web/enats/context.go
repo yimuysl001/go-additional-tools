@@ -2,6 +2,7 @@ package enats
 
 import (
 	"context"
+	"encoding/base64"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/os/gctx"
@@ -27,7 +28,28 @@ func NewMsgContext(msg *nats.Msg) *MsgContext {
 }
 
 func (c *MsgContext) GetMsgParam() *gjson.Json {
-	return gjson.New(c.msg.Header.Get(RequestParam))
+
+	return gjson.New(c.getHeaderString(RequestParam))
+
+}
+
+func (c *MsgContext) getHeaderString(key string) string {
+	get := c.msg.Header.Get(key)
+	if get == "" {
+		return ""
+	}
+	decodeString, err := base64.StdEncoding.DecodeString(get)
+	if err != nil {
+		return get
+	}
+	return string(decodeString)
+
+}
+
+func (c *MsgContext) setHeaderString(key string, valus string) {
+
+	c.msg.Header.Set(key, base64.StdEncoding.EncodeToString([]byte(valus)))
+
 }
 
 func (c *MsgContext) GetMsgData() []byte {
@@ -35,15 +57,15 @@ func (c *MsgContext) GetMsgData() []byte {
 }
 
 func (c *MsgContext) GetMsgMethod() string {
-	return c.msg.Header.Get(RequestMethod)
+	return c.getHeaderString(RequestMethod)
 }
 
 func (c *MsgContext) GetMsgUrlPath() string {
-	return c.msg.Header.Get(RequestUrlPath)
+	return c.getHeaderString(RequestUrlPath)
 }
 
 func (c *MsgContext) GetMsgTraceId() string {
-	return c.msg.Header.Get(RespondTraceHeader)
+	return c.getHeaderString(RespondTraceHeader)
 }
 func (c *MsgContext) GetMsgCtx() context.Context {
 
@@ -59,7 +81,7 @@ func (c *MsgContext) GetMsgHeader() map[string][]string {
 }
 
 func (c *MsgContext) GetMsgHeaderString(key string) string {
-	return c.msg.Header.Get(key)
+	return c.getHeaderString(key)
 }
 
 func (c *MsgContext) SetResponseBody(data []byte) {
@@ -67,30 +89,30 @@ func (c *MsgContext) SetResponseBody(data []byte) {
 }
 
 func (c *MsgContext) SetResponseHeader(key string, value string) {
-	c.resp.Header.Set(key, value)
+	c.setHeaderString(key, value)
 }
 
 func (c *MsgContext) SetResponseError(err error, status ...string) {
 	c.resp.Data = []byte(err.Error())
-	c.resp.Header.Set(RespondErrorHeader, err.Error())
+	c.setHeaderString(RespondErrorHeader, err.Error())
 	if len(status) > 0 && status[0] != "" {
-		c.resp.Header.Set(RespondStatus, status[0])
+		c.setHeaderString(RespondStatus, status[0])
 	} else {
-		c.resp.Header.Set(RespondStatus, "500")
+		c.setHeaderString(RespondStatus, "500")
 	}
 }
 
 func (c *MsgContext) ResponseWrite(body []byte, status ...string) {
 	c.resp.Data = body
 	if len(status) > 0 && status[0] != "" {
-		c.resp.Header.Set(RespondStatus, status[0])
+		c.setHeaderString(RespondStatus, status[0])
 	} else {
-		c.resp.Header.Set(RespondStatus, "200")
+		c.setHeaderString(RespondStatus, "200")
 	}
 }
 
 func (c *MsgContext) SetResponseStatus(status string) {
-	c.resp.Header.Set(RespondStatus, status)
+	c.setHeaderString(RespondStatus, status)
 }
 
 func (c *MsgContext) GetResponseMsg() *nats.Msg {
