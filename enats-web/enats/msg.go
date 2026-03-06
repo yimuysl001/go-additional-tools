@@ -3,6 +3,7 @@ package enats
 import (
 	"context"
 	"encoding/base64"
+
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
@@ -10,6 +11,18 @@ import (
 	"github.com/gogf/gf/v2/util/gconv"
 	"github.com/nats-io/nats.go"
 )
+
+//func NewMsgByFiber(c fiber.Ctx) *nats.Msg {
+//	var (
+//		ctx     = c.Context()
+//		subj    = c.Params("subj")
+//		method  = r.Method
+//		url     = r.GetRouter("act").String()
+//		headers = r.Request.Header
+//		param   = r.GetRequestMap()
+//		body    = r.GetBody()
+//	)
+//}
 
 // NewMsg 创建带跟踪ID的消息
 func NewMsgByRequest(r *ghttp.Request) *nats.Msg {

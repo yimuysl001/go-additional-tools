@@ -174,6 +174,21 @@ func (n *NatsCli) WebRequest(r *ghttp.Request, timeout time.Duration) (*nats.Msg
 	return n.ns.RequestMsg(msg, timeout)
 }
 
+func (n *NatsCli) Request(ctx context.Context, sub string, body []byte, timeout time.Duration) (*nats.Msg, error) {
+	if n.err != nil {
+		return nil, n.err
+	}
+	msg := NewMsg(ctx, sub, body)
+	return n.ns.RequestMsg(msg, timeout)
+}
+
+//func (n *NatsCli) WebRequestFiber(c fiber.Ctx, ) (*nats.Msg, error) {
+//	if n.err != nil {
+//		return nil, n.err
+//	}
+//
+//}
+
 func (n *NatsCli) WebRequestCtx(ctx context.Context, subj, url string, body []byte, timeout time.Duration) (*nats.Msg, error) {
 	if n.err != nil {
 		return nil, n.err

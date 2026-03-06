@@ -1,0 +1,7 @@
+*.log
+*.exe
+*.gz
+*.ldb
+*.pid
+*.bak
+storage/

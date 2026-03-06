@@ -1,24 +1,97 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/app/client"
+	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/os/gfile"
+	"github.com/nats-io/nats.go"
 	"go-additional-tools/econf"
 	"go-additional-tools/enats-web/enats"
 	"go-additional-tools/enats-web/eserver"
 	"time"
 )
 
+type ServerTracer struct {
+	// contain entities which recording metric
+}
+
+// Start record the beginning of an RPC invocation.
+func (s *ServerTracer) Start(ctx context.Context, _ *app.RequestContext) context.Context {
+	// do nothing
+	return gctx.New()
+}
+
+// Finish record after receiving the response of server.
+func (s *ServerTracer) Finish(ctx context.Context, c *app.RequestContext) {
+
+}
+
 func main() {
 	econf.MustInitConf() // 初始化配置
+	//
+	////go enats.NatsServer() // 启用nats
+	//time.Sleep(time.Second)
+	//natsWebSample() // 启用测试模块
+	//
+	//httpweb() // 统一网关
+	natsw := enats.Nats("http")
 
-	//go enats.NatsServer() // 启用nats
-	time.Sleep(time.Second)
-	natsWebSample() // 启用测试模块
+	h := server.Default(server.WithHostPorts(":8080"),
+		server.WithTracer(&ServerTracer{}),
 
-	httpweb() // 统一网关
+	)
+	newClient, err := client.NewClient()
+	if err != nil {
+		panic(err)
+	}
+
+	h.Any("/:subj/*action", func(ctx context.Context, c *app.RequestContext) {
+
+		var subj = c.Param("subj")
+		g.Log().Info(ctx, "subj:{}", subj)
+
+		msg, err2 := natsw.Request(ctx, "httpWebCloud."+subj, []byte("ping"), 30*time.Second)
+
+		if err2 != nil {
+			if errors.Is(err2, nats.ErrNoResponders) {
+				c.WriteString("暂无接收者")
+			} else {
+				g.Log().Error(ctx, "nats error", err2)
+				c.WriteString(err2.Error())
+			}
+			return
+
+		}
+
+		var action = c.Param("action")
+
+		g.Log().Info(ctx, "action:{}", action)
+
+		g.Log().Info(ctx, "msg.Data:{}", string(msg.Data))
+
+		s := c.QueryArgs().String()
+		requestURI := string(msg.Data) + "/" + action
+		if s != "" {
+			requestURI = requestURI + "?" + s
+		}
+
+		c.Request.SetRequestURI(requestURI)
+		c.Request.Header.Set("Request-TranceId", gctx.CtxId(ctx))
+		err2 = newClient.Do(ctx, &c.Request, &c.Response)
+		if err2 != nil {
+			g.Log().Error(ctx, "http error", err2)
+			c.WriteString(err2.Error())
+		}
+
+	})
+	h.Run()
+
 }
 
 func httpweb() {
