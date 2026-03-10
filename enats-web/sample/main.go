@@ -54,9 +54,10 @@ func main() {
 	h.Any("/:subj/*action", func(ctx context.Context, c *app.RequestContext) {
 
 		var subj = c.Param("subj")
+		var action = c.Param("action")
 		g.Log().Info(ctx, "subj:{}", subj)
-
-		msg, err2 := natsw.Request(ctx, "httpWebCloud."+subj, []byte("ping"), 30*time.Second)
+		g.Log().Info(ctx, "action:{}", action)
+		msg, err2 := natsw.Request(ctx, "httpWebCloud."+subj, []byte(action), 10*time.Second)
 
 		if err2 != nil {
 			if errors.Is(err2, nats.ErrNoResponders) {
@@ -69,14 +70,12 @@ func main() {
 
 		}
 
-		var action = c.Param("action")
-
 		g.Log().Info(ctx, "action:{}", action)
 
 		g.Log().Info(ctx, "msg.Data:{}", string(msg.Data))
 
 		s := c.QueryArgs().String()
-		requestURI := string(msg.Data) + "/" + action
+		requestURI := string(msg.Data) //+ "/" + action
 		if s != "" {
 			requestURI = requestURI + "?" + s
 		}

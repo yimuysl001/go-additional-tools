@@ -22,7 +22,8 @@ func main() {
 	natsx := enats.Nats("http")
 
 	natsx.Subscribe("httpWebCloud.test", "webrequest", func(subj, queue string, msg *nats.Msg) {
-		msg.Respond([]byte("http://127.0.0.1:8127"))
+
+		msg.Respond([]byte("http://127.0.0.1:8127/" + string(msg.Data)))
 	})
 	g.Log().SetCtxKeys("Request-TranceId")
 	server.Group("/", func(group *ghttp.RouterGroup) {
